@@ -43,12 +43,10 @@ class Linear(minitorch.Module):
 
     def forward(self, inputs):
         # TODO: Implement for Task 1.5.
-        output = []
-        for j in range(len(self.bias)):
-            out = self.bias[j].value
-            for i in range(len(inputs)):
-                out += self.weights[i][j].value * inputs[i]
-            output.append(out)
+        output = [b.value for b in self.bias]
+        for i, x in enumerate(inputs):
+            for j in range(len(output)):
+                output[j] += x * self.weights[i][j].value
         return output
 
 

@@ -123,7 +123,7 @@ class Scalar:
         return ReLU.apply(self)
 
     def __eq__(self, b: ScalarLike) -> Scalar:
-        return EQ.apply(self, b)
+        return EQ.apply(b, self)
 
     # Variable elements for backprop
 
@@ -174,7 +174,7 @@ class Scalar:
 
         # TODO: Implement for Task 1.3.
         gradients = h.last_fn._backward(h.ctx, d_output)
-        return zip(h.inputs, gradients)
+        return list(zip(h.inputs, gradients))
 
     def backward(self, d_output: Optional[float] = None) -> None:
         """Calls autodiff to fill in the derivatives for the history of this object.

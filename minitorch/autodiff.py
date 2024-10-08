@@ -26,11 +26,12 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
 
     """
     # TODO: Implement for Task 1.1.
-    left = list(vals)
-    left[arg] -= epsilon
-    right = list(vals)
-    right[arg] += epsilon
-    return (f(*right) - f(*left)) / (2 * epsilon)
+    left = [val for val in vals]
+    right = [val for val in vals]
+    left[arg] += epsilon
+    right[arg] -= epsilon
+    delta = f(*left) - f(*right)
+    return delta / (2 * epsilon)
 
 
 variable_count = 1
@@ -77,21 +78,21 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
 
     """
     # TODO: Implement for Task 1.4.
-    sorted_nodes = []
+    sorted_nodes: list[Variable] = []
     visited = set()
 
     def visit(node: Variable) -> None:
-        if node.unique_id in visited:
+        if node.unique_id in visited or node.is_constant():
             return
         if not node.is_leaf():
             for parent in node.parents:
-                visit(parent)
+                if not parent.is_constant():
+                    visit(parent)
         visited.add(node.unique_id)
-        if not node.is_constant():
-            sorted_nodes.append(node)
-
+        sorted_nodes.insert(0, node)
+        
     visit(variable)
-    return reversed(sorted_nodes)
+    return sorted_nodes
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -108,20 +109,20 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
 
     """
     # TODO: Implement for Task 1.4.
-    gradient_dict = {}
-    sorted_variables = list(topological_sort(variable))
-
-    for var in sorted_variables:
-        gradient_dict[var.unique_id] = 0
-    gradient_dict[variable.unique_id] = deriv
-
-    for var in sorted_variables:
+    derivatives = {}
+    queue = topological_sort(variable)
+    derivatives[variable.unique_id] = deriv
+    for var in queue:
+        deriv = derivatives[var.unique_id]
         if var.is_leaf():
-            var.accumulate_derivative(gradient_dict[var.unique_id])
+            var.accumulate_derivative(deriv)
         else:
-            for parent, gradient in var.chain_rule(gradient_dict[var.unique_id]):
-                gradient_dict[parent.unique_id] += gradient
-
+            for v, d in var.chain_rule(deriv):
+                if v.is_constant():
+                    continue
+                derivatives.setdefault(v.unique_id, 0.0)
+                derivatives[v.unique_id] += d
+                
 
 @dataclass
 class Context:

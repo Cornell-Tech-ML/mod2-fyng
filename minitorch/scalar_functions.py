@@ -129,7 +129,7 @@ class Inv(ScalarFunction):
     def forward(ctx: Context, a: float) -> float:
         """Compute $f(x) = 1 / x$"""
         ctx.save_for_backward(a)
-        return 1 / a
+        return operators.inv(a)
 
     @staticmethod
     def backward(ctx: Context, d_output: float) -> float:
@@ -158,14 +158,15 @@ class Sigmoid(ScalarFunction):
     @staticmethod
     def forward(ctx: Context, a: float) -> float:
         """Compute $f(x) = 1 / (1 + e^{-x})$"""
-        ctx.save_for_backward(a)
-        return operators.sigmoid(a)
+        out = operators.sigmoid(a)
+        ctx.save_for_backward(out)
+        return out
 
     @staticmethod
     def backward(ctx: Context, d_output: float) -> float:
         """$f'(x) * d$ = $f(x) * (1 - f(x)) * d$"""
-        (a,) = ctx.saved_values
-        return operators.sigmoid(a) * (1 - operators.sigmoid(a)) * d_output
+        sigma: float = ctx.saved_values[0]
+        return sigma * (1.0 - sigma) * d_output
 
 
 class ReLU(ScalarFunction):
@@ -190,14 +191,15 @@ class Exp(ScalarFunction):
     @staticmethod
     def forward(ctx: Context, a: float) -> float:
         """Compute $f(x) = e^x$"""
-        ctx.save_for_backward(a)
-        return operators.exp(a)
+        out = operators.exp(a)
+        ctx.save_for_backward(out)
+        return out
 
     @staticmethod
     def backward(ctx: Context, d_output: float) -> float:
         """$f'(x) * d = e^x * d$"""
-        (a,) = ctx.saved_values
-        return operators.exp(a) * d_output
+        out: float = ctx.saved_values[0]
+        return out * d_output
 
 
 class LT(ScalarFunction):
@@ -206,8 +208,7 @@ class LT(ScalarFunction):
     @staticmethod
     def forward(ctx: Context, a: float, b: float) -> float:
         """Compute $f(x, y) = x < y$"""
-        ctx.save_for_backward(a, b)
-        return operators.lt(a, b)
+        return 1.0 if a < b else 0.0
 
     @staticmethod
     def backward(ctx: Context, d_output: float) -> tuple[float, float]:
@@ -221,8 +222,7 @@ class EQ(ScalarFunction):
     @staticmethod
     def forward(ctx: Context, a: float, b: float) -> float:
         """Compute $f(x, y) = x == y$"""
-        ctx.save_for_backward(a, b)
-        return operators.eq(a, b)
+        return 1.0 if a == b else 0.0
 
     @staticmethod
     def backward(ctx: Context, d_output: float) -> tuple[float, float]:
