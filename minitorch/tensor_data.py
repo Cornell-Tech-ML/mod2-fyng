@@ -88,9 +88,19 @@ def broadcast_index(
 
     """
     # TODO: Implement for Task 2.2.
-    raise NotImplementedError("Need to implement for Task 2.2")
-
-
+    union_shape = shape_broadcast(big_shape.tolist(), shape.tolist())
+    i = 1
+    # starting from right aligned
+    while i <= len(shape):
+        if union_shape[-i] == shape[-i]:
+            # if the shape is the same, then the index is the same
+            out_index[-i] = big_index[-i]
+        else:
+            # if shape is different, then broadcasted 1 from shape
+            out_index[-i] = 0
+        i += 1        
+        
+        
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
     """Broadcast two shapes to create a new union shape.
 
