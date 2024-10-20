@@ -349,10 +349,6 @@ class Tensor:
             return All.apply(self)
         else:
             return All.apply(self, Tensor.make([dim], (1,), backend=self.backend))
-   
-    def permute(self, *dim: int) -> Tensor:
-        dim_tensor = Tensor.make(list(dim), (len(dim),), backend=self.backend)
-        return Permute.apply(self, dim_tensor)
     
     def view(self, *dim: int) -> Tensor:
         dim_tensor = Tensor.make(list(dim), (len(dim),), backend=self.backend)
@@ -366,5 +362,10 @@ class Tensor:
     
     def mean(self, dim: Optional[int] = None) -> Tensor:
         if dim is None:
-            return Mul.apply(self.sum(), Inv.apply(tensor([self.size])))    
-        return Mul.apply(self.sum(), Inv.apply(tensor([self.shape[dim]])))
+            return self.sum() / self.size
+        else:
+            return self.sum(dim) / self.shape[dim]
+
+    # def permute(self, *dim: int) -> Tensor:
+    #     dim_tensor = Tensor.make(list(dim), (len(dim),), backend=self.backend)
+    #     return Permute.apply(self, dim_tensor)
