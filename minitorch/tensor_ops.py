@@ -263,7 +263,7 @@ def tensor_map(
     ) -> None:
         # TODO: Implement for Task 2.3.        
         out_index = np.zeros(len(out_shape), dtype=np.int32)
-        in_index = np.zeros(len(out_shape), dtype=np.int32)
+        in_index = np.zeros(len(in_shape), dtype=np.int32)
         for i in range(len(out)):
             to_index(i, out_shape, out_index)
             broadcast_index(out_index, out_shape, in_shape, in_index)
