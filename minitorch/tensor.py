@@ -343,7 +343,6 @@ class Tensor:
     def exp(self) -> Tensor:
         return Exp.apply(self)
       
-   # FIXME:
     def all(self, dim: Optional[int] = None) -> Tensor:
         if dim is None:
             return All.apply(self)
@@ -366,6 +365,9 @@ class Tensor:
         else:
             return self.sum(dim) / self.shape[dim]
 
-    # def permute(self, *dim: int) -> Tensor:
-    #     dim_tensor = Tensor.make(list(dim), (len(dim),), backend=self.backend)
-    #     return Permute.apply(self, dim_tensor)
+    def permute(self, *dim: Optional[int]) -> Tensor:
+        if dim is None:
+            return Permute.apply(self)
+        else:
+            dim_tensor = Tensor.make(list(dim), (len(dim),), backend=self.backend)
+            return Permute.apply(self, dim_tensor)
