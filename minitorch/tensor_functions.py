@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from operator import inv
 import random
 from typing import TYPE_CHECKING, Optional, Union
 
@@ -220,13 +221,30 @@ class IsClose(Function):
     
 class Permute(Function):
     @staticmethod
-    # FIXME
-    def forward(ctx: Context, a: Tensor, *order: int) -> Tensor:    
-        raise NotImplementedError('Permute function not implemented yet')
+    def forward(ctx: Context, a: Tensor, order: Optional[Tensor] = None) -> Tensor:
+        if order is None:
+            ctx.save_for_backward(None)
+            return a
+        else:
+            int_order = order.to_numpy().astype(int)
+            ctx.save_for_backward(int_order)
+            a._tensor = a._tensor.permute(*int_order)
+            return a
     
-    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
-        raise NotImplementedError('Permute function not implemented yet')
-
+    def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, float]:
+        (order,) = ctx.saved_values        
+        if order is None:
+            return grad_output, 0.0
+        else:
+            inv_order = np.zeros(len(order), dtype=int)
+            for i, o in enumerate(order):
+                inv_order[o] = i
+            
+            print(order, inv_order)
+            
+            grad_output._tensor = grad_output._tensor.permute(*inv_order)
+            return grad_output, 0.0
+        
 # End of Task 2.3
 
 class View(Function):
