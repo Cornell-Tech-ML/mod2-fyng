@@ -298,6 +298,9 @@ class Tensor:
     def dims(self) -> int:
         return len(self.shape)
     
+    def zero_grad_(self) -> None:
+        self.grad = None
+    
     def __add__(self, b: TensorLike) -> Tensor:
         return Add.apply(self, self._ensure_tensor(b))
 
