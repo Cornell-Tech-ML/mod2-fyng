@@ -32,7 +32,6 @@ class Network(minitorch.Module):
 class Linear(minitorch.Module):
     def __init__(self, in_size: int, out_size: int) -> None:
         super().__init__()
-        len = in_size * out_size
         self.in_size = in_size
         self.out_size = out_size
         self.weights = RParam(1, in_size, out_size)
