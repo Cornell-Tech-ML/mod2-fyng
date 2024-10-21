@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from operator import inv
 import random
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 
@@ -97,7 +98,7 @@ class Add(Function):
 
 class All(Function):
     @staticmethod
-    def forward(ctx: Context, a: Tensor, dim: Tensor) -> Tensor:
+    def forward(ctx: Context, a: Tensor, dim: Optional[Tensor] = None) -> Tensor:
         """Return 1 if all are true"""
         if dim is not None:
             return a.f.mul_reduce(a, int(dim.item()))
@@ -106,7 +107,145 @@ class All(Function):
 
 
 # TODO: Implement for Task 2.3.
+class Mul(Function):
+    @staticmethod
+    def forward(ctx: Context, t1: Tensor, t2: Tensor) -> Tensor:
+        ctx.save_for_backward(t1, t2)
+        return t1.f.mul_zip(t1, t2)
 
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, Tensor]:
+        t1, t2 = ctx.saved_values
+        return grad_output.f.mul_zip(grad_output, t2), grad_output.f.mul_zip(grad_output, t1)
+
+
+class Sigmoid(Function):
+    @staticmethod
+    def forward(ctx: Context, a: Tensor) -> Tensor:
+        sigma_a = a.f.sigmoid_map(a)
+        ctx.save_for_backward(sigma_a)
+        return sigma_a
+    
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+        (sigma_a,) = ctx.saved_values
+        return grad_output.f.mul_zip(grad_output, sigma_a - sigma_a * sigma_a)
+
+
+class ReLU(Function):
+    @staticmethod
+    def forward(ctx: Context, a: Tensor) -> Tensor:
+        ctx.save_for_backward(a)
+        return a.f.relu_map(a)
+
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+        (a,) = ctx.saved_values
+        return grad_output.f.relu_back_zip(a, grad_output)
+
+
+class Log(Function):
+    @staticmethod
+    def forward(ctx: Context, a: Tensor) -> Tensor:
+        ctx.save_for_backward(a)
+        return a.f.log_map(a)
+
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+        (a,) = ctx.saved_values
+        return grad_output.f.log_back_zip(a, grad_output)
+    
+    
+class Exp(Function):
+    @staticmethod
+    def forward(ctx: Context, a: Tensor) -> Tensor:
+        exp_a = a.f.exp_map(a)
+        ctx.save_for_backward(exp_a)
+        return exp_a
+    
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tensor:
+        (exp_a,) = ctx.saved_values
+        return grad_output.f.mul_zip(grad_output, exp_a)
+    
+    
+class Sum(Function):
+    @staticmethod
+    def forward(ctx: Context, a: Tensor, dim: Optional[Tensor] = None) -> Tensor:
+        if dim is not None:
+            ctx.save_for_backward(int(dim.item()))
+            return a.f.add_reduce(a, int(dim.item()))
+        else:
+            ctx.save_for_backward(None)
+            return a.f.add_reduce(a.contiguous().view(int(operators.prod(a.shape))), 0)
+
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Union[Tensor, Tuple[Tensor, float]]:
+        # raise NotImplementedError('Sum function not implemented yet')
+        (dim,) = ctx.saved_values
+        if dim is not None:
+            return grad_output, 0.0
+        else:
+            return grad_output
+    
+    
+class LT(Function):
+    @staticmethod
+    def forward(ctx: Context, t1: Tensor, t2: Tensor) -> Tensor:
+        return t1.f.lt_zip(t1, t2)
+
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, Tensor]:
+        return grad_output.zeros(), grad_output.zeros()
+    
+    
+class EQ(Function):
+    @staticmethod
+    def forward(ctx: Context, t1: Tensor, t2: Tensor) -> Tensor:
+        return t1.f.eq_zip(t1, t2)
+
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, Tensor]:
+        return grad_output.zeros(), grad_output.zeros()    
+    
+    
+class IsClose(Function):
+    @staticmethod
+    def forward(ctx: Context, t1: Tensor, t2: Tensor) -> Tensor:
+        return t1.f.is_close_zip(t1, t2)
+
+    @staticmethod
+    def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, Tensor]:
+        return grad_output.zeros(), grad_output.zeros()    
+    
+    
+class Permute(Function):
+    @staticmethod
+    def forward(ctx: Context, a: Tensor, order: Optional[Tensor] = None) -> Tensor:
+        if order is None:
+            ctx.save_for_backward(None)
+            return a
+        else:
+            int_order = order.to_numpy().astype(int)
+            ctx.save_for_backward(int_order)
+            a._tensor = a._tensor.permute(*int_order)
+            return a
+    
+    def backward(ctx: Context, grad_output: Tensor) -> Tuple[Tensor, float]:
+        (order,) = ctx.saved_values        
+        if order is None:
+            return grad_output, 0.0
+        else:
+            inv_order = np.zeros(len(order), dtype=int)
+            for i, o in enumerate(order):
+                inv_order[o] = i
+            
+            print(order, inv_order)
+            
+            grad_output._tensor = grad_output._tensor.permute(*inv_order)
+            return grad_output, 0.0
+        
+# End of Task 2.3
 
 class View(Function):
     @staticmethod
