@@ -93,7 +93,7 @@ Epoch: 500/500, loss: 4.698965277904936, correct: 50
 </details>
 
 
-### Diag 
+### Diag
 Params:
 * lr = 0.1
 * n_hidden = 3

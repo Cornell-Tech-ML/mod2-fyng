@@ -90,7 +90,7 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
                     visit(parent)
         visited.add(node.unique_id)
         sorted_nodes.insert(0, node)
-        
+
     visit(variable)
     return sorted_nodes
 
@@ -122,7 +122,7 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
                     continue
                 derivatives.setdefault(v.unique_id, 0.0)
                 derivatives[v.unique_id] += d
-                
+
 
 @dataclass
 class Context:

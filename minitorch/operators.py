@@ -216,6 +216,6 @@ def sum(x: Iterable[float]) -> float:
     return reduce(add, 0.0)(x)
 
 
-def prod(x: list[float]) -> float:
+def prod(x: Iterable[float]) -> float:
     """Take the product of a list using `reduce` and `mul`."""
     return reduce(mul, 1.0)(x)
